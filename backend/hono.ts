@@ -9,12 +9,16 @@ const app = new Hono();
 app.use("*", cors());
 
 app.use(
-  "/trpc/*",
+  "/api/trpc/*",
   trpcServer({
     router: appRouter,
     createContext,
   })
 );
+
+app.get("/api", (c) => {
+  return c.json({ status: "ok", message: "Backend API is running" });
+});
 
 app.get("/", (c) => {
   return c.json({ status: "ok", message: "Backend API is running" });
