@@ -7,12 +7,22 @@ export default async (req, context) => {
       url: req.url,
       headers: Object.fromEntries(req.headers.entries()),
     });
+    
+    console.log('[Netlify Function] Environment check:', {
+      hasDbUrl: !!process.env.DATABASE_URL,
+      nodeEnv: process.env.NODE_ENV,
+    });
 
     const url = new URL(req.url);
+    const originalPath = url.pathname;
     const path = url.pathname.replace(/^\/\.netlify\/functions\/api/, '');
     url.pathname = path || '/';
     
-    console.log('[Netlify Function] Rewritten path:', path, 'Full URL:', url.toString());
+    console.log('[Netlify Function] Path transformation:', {
+      original: originalPath,
+      rewritten: path,
+      fullUrl: url.toString(),
+    });
 
     let body = undefined;
     if (req.method !== 'GET' && req.method !== 'HEAD') {

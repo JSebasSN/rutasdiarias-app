@@ -1,8 +1,12 @@
 import { neon } from '@neondatabase/serverless';
 
 if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL environment variable is not set');
+  console.error('Available env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET')));
   throw new Error('DATABASE_URL environment variable is not set');
 }
+
+console.log('DATABASE_URL is configured:', !!process.env.DATABASE_URL);
 
 export const sql = neon(process.env.DATABASE_URL);
 
