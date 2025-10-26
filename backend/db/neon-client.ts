@@ -1,14 +1,17 @@
 import { neon } from '@neondatabase/serverless';
 
-if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL environment variable is not set');
+const databaseUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error('Database URL not found. Checked NETLIFY_DATABASE_URL and DATABASE_URL');
   console.error('Available env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET')));
-  throw new Error('DATABASE_URL environment variable is not set');
+  throw new Error('Database URL environment variable is not set');
 }
 
-console.log('DATABASE_URL is configured:', !!process.env.DATABASE_URL);
+console.log('Database URL is configured:', !!databaseUrl);
+console.log('Using NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
 
-export const sql = neon(process.env.DATABASE_URL);
+export const sql = neon(databaseUrl);
 
 export async function initializeDatabase() {
   console.log('Initializing database...');
