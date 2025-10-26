@@ -311,10 +311,6 @@ export function RoutesProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  console.log('RoutesContext - Tractors:', tractorsQuery.data?.length || 0, tractorsQuery.data);
-  console.log('RoutesContext - Trailers:', trailersQuery.data?.length || 0, trailersQuery.data);
-  console.log('RoutesContext - Vans:', vansQuery.data?.length || 0, vansQuery.data);
-
   const value = useMemo(() => ({
     routes: routesQuery.data || [],
     records: recordsQuery.data || [],
