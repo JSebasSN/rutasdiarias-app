@@ -8,7 +8,7 @@
     "start-web-dev": "DEBUG=expo* bunx rork start -p 2xhmyqurudkwv1h7s0dgs --web --tunnel",
     "lint": "expo lint",
     "build": "npx expo export -p web",
-    "postbuild": "cp -r dist/_expo dist/expo || true"
+    "postbuild": "cp -r dist/_expo dist/expo || true",
     "vercel-build": "npm install --legacy-peer-deps && npm run build"
   },
   "dependencies": {
