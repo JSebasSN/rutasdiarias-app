@@ -12,7 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Plus, X, Truck, ChevronDown, User, Car, Calendar, Lock } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoutes } from '@/contexts/RoutesContext';
 import { Driver, RouteRecord } from '@/types/routes';
 import Colors from '@/constants/colors';
@@ -223,12 +223,12 @@ export default function NewRecordScreen() {
             <View style={styles.headerInner}>
               <View style={styles.headerLeft}>
                 <View style={styles.headerIconContainer}>
-                  <Truck color={Colors.primary} size={24} strokeWidth={2.5} />
+                  <Ionicons name="car-outline" color={Colors.primary} size={24} />
                 </View>
                 <View>
                   <Text style={styles.headerTitle}>Nuevo Registro</Text>
                   <View style={styles.headerDateRow}>
-                    <Calendar color={Colors.textSecondary} size={14} />
+                    <Ionicons name="calendar-outline" color={Colors.textSecondary} size={14} />
                     <Text style={styles.headerDate}>
                       {new Date().toLocaleDateString('es-ES', { 
                         day: 'numeric',
@@ -295,11 +295,11 @@ export default function NewRecordScreen() {
                 <View style={styles.card}>
                   <View style={styles.cardHeader}>
                     <View style={styles.cardHeaderLeft}>
-                      <User color={Colors.primary} size={20} />
+                      <Ionicons name="person-outline" color={Colors.primary} size={20} />
                       <Text style={styles.cardTitle}>Conductores</Text>
                     </View>
                     <TouchableOpacity style={styles.addBtn} onPress={addDriver}>
-                      <Plus color="#fff" size={18} strokeWidth={2.5} />
+                      <Ionicons name="add" color="#fff" size={18} />
                     </TouchableOpacity>
                   </View>
 
@@ -315,7 +315,7 @@ export default function NewRecordScreen() {
                               onPress={() => removeDriver(driver.id)}
                               style={styles.removeBtn}
                             >
-                              <X color={Colors.danger} size={18} strokeWidth={2.5} />
+                              <Ionicons name="close" color={Colors.danger} size={18} />
                             </TouchableOpacity>
                           )}
                         </View>
@@ -325,9 +325,9 @@ export default function NewRecordScreen() {
                             style={styles.quickSelectBtn}
                             onPress={() => openDriverPicker(index)}
                           >
-                            <User color={Colors.primary} size={16} />
+                            <Ionicons name="person-outline" color={Colors.primary} size={16} />
                             <Text style={styles.quickSelectText}>Seleccionar guardado</Text>
-                            <ChevronDown color={Colors.primary} size={16} />
+                            <Ionicons name="chevron-down" color={Colors.primary} size={16} />
                           </TouchableOpacity>
                         )}
 
@@ -373,7 +373,7 @@ export default function NewRecordScreen() {
                 <View style={styles.card}>
                   <View style={styles.cardHeader}>
                     <View style={styles.cardHeaderLeft}>
-                      <Car color={Colors.primary} size={20} />
+                      <Ionicons name="car-sport-outline" color={Colors.primary} size={20} />
                       <Text style={styles.cardTitle}>Vehículos</Text>
                     </View>
                   </View>
@@ -387,11 +387,11 @@ export default function NewRecordScreen() {
                             style={styles.quickSelectBtn}
                             onPress={() => setTractorModalVisible(true)}
                           >
-                            <Car color={Colors.primary} size={16} />
+                            <Ionicons name="car-sport-outline" color={Colors.primary} size={16} />
                             <Text style={styles.quickSelectText}>
                               {sortedTractors.length} guardada{sortedTractors.length !== 1 ? 's' : ''}
                             </Text>
-                            <ChevronDown color={Colors.primary} size={16} />
+                            <Ionicons name="chevron-down" color={Colors.primary} size={16} />
                           </TouchableOpacity>
                         )}
                         <View style={styles.inputGroup}>
@@ -414,11 +414,11 @@ export default function NewRecordScreen() {
                             style={styles.quickSelectBtn}
                             onPress={() => setTrailerModalVisible(true)}
                           >
-                            <Car color={Colors.primary} size={16} />
+                            <Ionicons name="car-sport-outline" color={Colors.primary} size={16} />
                             <Text style={styles.quickSelectText}>
                               {sortedTrailers.length} guardado{sortedTrailers.length !== 1 ? 's' : ''}
                             </Text>
-                            <ChevronDown color={Colors.primary} size={16} />
+                            <Ionicons name="chevron-down" color={Colors.primary} size={16} />
                           </TouchableOpacity>
                         )}
                         <View style={styles.inputGroup}>
@@ -442,11 +442,11 @@ export default function NewRecordScreen() {
                           style={styles.quickSelectBtn}
                           onPress={() => setVanModalVisible(true)}
                         >
-                          <Car color={Colors.primary} size={16} />
+                          <Ionicons name="car-sport-outline" color={Colors.primary} size={16} />
                           <Text style={styles.quickSelectText}>
                             {sortedVans.length} guardada{sortedVans.length !== 1 ? 's' : ''}
                           </Text>
-                          <ChevronDown color={Colors.primary} size={16} />
+                          <Ionicons name="chevron-down" color={Colors.primary} size={16} />
                         </TouchableOpacity>
                       )}
                       <View style={styles.inputGroup}>
@@ -467,7 +467,7 @@ export default function NewRecordScreen() {
                 <View style={styles.card}>
                   <View style={styles.cardHeader}>
                     <View style={styles.cardHeaderLeft}>
-                      <Lock color={Colors.primary} size={20} />
+                      <Ionicons name="lock-closed-outline" color={Colors.primary} size={20} />
                       <Text style={styles.cardTitle}>Precinto</Text>
                     </View>
                   </View>
@@ -518,7 +518,7 @@ export default function NewRecordScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Seleccionar Conductor</Text>
                 <TouchableOpacity onPress={() => setDriverModalVisible(false)}>
-                  <X color={Colors.text} size={24} />
+                  <Ionicons name="close" color={Colors.text} size={24} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalList}>
@@ -530,7 +530,7 @@ export default function NewRecordScreen() {
                   >
                     <View style={styles.modalItemLeft}>
                       <View style={styles.modalItemIcon}>
-                        <User color={Colors.primary} size={20} />
+                        <Ionicons name="person-outline" color={Colors.primary} size={20} />
                       </View>
                       <View style={styles.modalItemContent}>
                         <Text style={styles.modalItemName}>{driver.name}</Text>
@@ -540,10 +540,10 @@ export default function NewRecordScreen() {
                         </Text>
                       </View>
                     </View>
-                    <ChevronDown 
+                    <Ionicons 
+                      name="chevron-forward" 
                       color={Colors.textSecondary} 
                       size={20} 
-                      style={{ transform: [{ rotate: '-90deg' }] }} 
                     />
                   </TouchableOpacity>
                 ))}
@@ -563,7 +563,7 @@ export default function NewRecordScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Seleccionar Tractora</Text>
                 <TouchableOpacity onPress={() => setTractorModalVisible(false)}>
-                  <X color={Colors.text} size={24} />
+                  <Ionicons name="close" color={Colors.text} size={24} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalList}>
@@ -575,7 +575,7 @@ export default function NewRecordScreen() {
                   >
                     <View style={styles.modalItemLeft}>
                       <View style={styles.modalItemIcon}>
-                        <Car color={Colors.primary} size={20} />
+                        <Ionicons name="car-sport-outline" color={Colors.primary} size={20} />
                       </View>
                       <View style={styles.modalItemContent}>
                         <Text style={styles.modalItemName}>{tractor.plate}</Text>
@@ -585,10 +585,10 @@ export default function NewRecordScreen() {
                         </Text>
                       </View>
                     </View>
-                    <ChevronDown 
+                    <Ionicons 
+                      name="chevron-forward" 
                       color={Colors.textSecondary} 
                       size={20} 
-                      style={{ transform: [{ rotate: '-90deg' }] }} 
                     />
                   </TouchableOpacity>
                 ))}
@@ -608,7 +608,7 @@ export default function NewRecordScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Seleccionar Remolque</Text>
                 <TouchableOpacity onPress={() => setTrailerModalVisible(false)}>
-                  <X color={Colors.text} size={24} />
+                  <Ionicons name="close" color={Colors.text} size={24} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalList}>
@@ -620,7 +620,7 @@ export default function NewRecordScreen() {
                   >
                     <View style={styles.modalItemLeft}>
                       <View style={styles.modalItemIcon}>
-                        <Car color={Colors.primary} size={20} />
+                        <Ionicons name="car-sport-outline" color={Colors.primary} size={20} />
                       </View>
                       <View style={styles.modalItemContent}>
                         <Text style={styles.modalItemName}>{trailer.plate}</Text>
@@ -630,10 +630,10 @@ export default function NewRecordScreen() {
                         </Text>
                       </View>
                     </View>
-                    <ChevronDown 
+                    <Ionicons 
+                      name="chevron-forward" 
                       color={Colors.textSecondary} 
                       size={20} 
-                      style={{ transform: [{ rotate: '-90deg' }] }} 
                     />
                   </TouchableOpacity>
                 ))}
@@ -653,7 +653,7 @@ export default function NewRecordScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Seleccionar Furgoneta</Text>
                 <TouchableOpacity onPress={() => setVanModalVisible(false)}>
-                  <X color={Colors.text} size={24} />
+                  <Ionicons name="close" color={Colors.text} size={24} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalList}>
@@ -665,7 +665,7 @@ export default function NewRecordScreen() {
                   >
                     <View style={styles.modalItemLeft}>
                       <View style={styles.modalItemIcon}>
-                        <Car color={Colors.primary} size={20} />
+                        <Ionicons name="car-sport-outline" color={Colors.primary} size={20} />
                       </View>
                       <View style={styles.modalItemContent}>
                         <Text style={styles.modalItemName}>{van.plate}</Text>
@@ -675,10 +675,10 @@ export default function NewRecordScreen() {
                         </Text>
                       </View>
                     </View>
-                    <ChevronDown 
+                    <Ionicons 
+                      name="chevron-forward" 
                       color={Colors.textSecondary} 
                       size={20} 
-                      style={{ transform: [{ rotate: '-90deg' }] }} 
                     />
                   </TouchableOpacity>
                 ))}

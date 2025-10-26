@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Calendar, Trash2, FileText, Edit2, Clock } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoutes } from '@/contexts/RoutesContext';
 import { RouteRecord } from '@/types/routes';
 import Colors from '@/constants/colors';
@@ -99,7 +99,7 @@ export default function HistoryScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerIcon}>
-            <Calendar color={Colors.primary} size={28} />
+            <Ionicons name="calendar-outline" color={Colors.primary} size={28} />
           </View>
           <View>
             <Text style={styles.headerTitle}>Historial</Text>
@@ -143,7 +143,7 @@ export default function HistoryScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {filteredRecords.length === 0 ? (
             <View style={styles.emptyState}>
-              <FileText color={Colors.textSecondary} size={64} />
+              <Ionicons name="document-text-outline" color={Colors.textSecondary} size={64} />
               <Text style={styles.emptyText}>No hay registros para esta fecha</Text>
             </View>
           ) : (
@@ -156,10 +156,10 @@ export default function HistoryScreen() {
                     </View>
                     <View style={styles.recordActions}>
                       <TouchableOpacity onPress={() => handleEdit(record)} style={styles.actionButton}>
-                        <Edit2 color={Colors.primary} size={20} />
+                        <Ionicons name="pencil-outline" color={Colors.primary} size={20} />
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => handleDelete(record.id)} style={styles.actionButton}>
-                        <Trash2 color={Colors.danger} size={20} />
+                        <Ionicons name="trash-outline" color={Colors.danger} size={20} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -254,7 +254,7 @@ export default function HistoryScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.editModal}>
               <View style={styles.editModalHeader}>
-                <Clock color={Colors.primary} size={24} />
+                <Ionicons name="time-outline" color={Colors.primary} size={24} />
                 <Text style={styles.editModalTitle}>Editar Registro</Text>
               </View>
               
@@ -278,7 +278,7 @@ export default function HistoryScreen() {
                   <View style={styles.editSection}>
                     <Text style={styles.editSectionTitle}>Hora de salida</Text>
                     <View style={styles.timeInputContainer}>
-                      <Clock color={Colors.textSecondary} size={20} />
+                      <Ionicons name="time-outline" color={Colors.textSecondary} size={20} />
                       <TouchableOpacity
                         style={styles.timeInput}
                         onPress={() => {

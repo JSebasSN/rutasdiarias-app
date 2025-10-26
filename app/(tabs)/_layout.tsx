@@ -1,6 +1,6 @@
 // template
 import { Tabs } from "expo-router";
-import { Plus, Calendar, MapPin } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 
 import Colors from "@/constants/colors";
@@ -27,21 +27,21 @@ export default function TabLayout() {
         name="new-record"
         options={{
           title: "Nuevo",
-          tabBarIcon: ({ color }) => <Plus color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add" color={color} size={24} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "Historial",
-          tabBarIcon: ({ color }) => <Calendar color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" color={color} size={24} />,
         }}
       />
       <Tabs.Screen
         name="routes"
         options={{
           title: "Rutas",
-          tabBarIcon: ({ color }) => <MapPin color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="map-outline" color={color} size={24} />,
         }}
       />
     </Tabs>

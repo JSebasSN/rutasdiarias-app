@@ -10,7 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { MapPin, Plus, Trash2, X } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoutes } from '@/contexts/RoutesContext';
 import { RouteTemplate, RouteType } from '@/types/routes';
 import Colors from '@/constants/colors';
@@ -67,14 +67,14 @@ export default function RoutesScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerIcon}>
-            <MapPin color={Colors.primary} size={28} />
+            <Ionicons name="map-outline" color={Colors.primary} size={28} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Gestión de Rutas</Text>
             <Text style={styles.headerSubtitle}>{routes.length} rutas configuradas</Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-            <Plus color="#ffffff" size={24} />
+            <Ionicons name="add" color="#ffffff" size={24} />
           </TouchableOpacity>
         </View>
 
@@ -94,7 +94,7 @@ export default function RoutesScreen() {
                       <Text style={styles.routeCardName}>{route.name}</Text>
                     </View>
                     <TouchableOpacity onPress={() => handleDeleteRoute(route.id)}>
-                      <Trash2 color={Colors.danger} size={20} />
+                      <Ionicons name="trash-outline" color={Colors.danger} size={20} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -111,7 +111,7 @@ export default function RoutesScreen() {
                       <Text style={styles.routeCardName}>{route.name}</Text>
                     </View>
                     <TouchableOpacity onPress={() => handleDeleteRoute(route.id)}>
-                      <Trash2 color={Colors.danger} size={20} />
+                      <Ionicons name="trash-outline" color={Colors.danger} size={20} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -120,7 +120,7 @@ export default function RoutesScreen() {
 
             {trailerRoutes.length === 0 && furgoRoutes.length === 0 && (
               <View style={styles.emptyState}>
-                <MapPin color={Colors.textSecondary} size={48} />
+                <Ionicons name="map-outline" color={Colors.textSecondary} size={48} />
                 <Text style={styles.emptyStateTitle}>No hay rutas</Text>
                 <Text style={styles.emptyStateText}>Crea tu primera ruta usando el botón +</Text>
               </View>
@@ -139,7 +139,7 @@ export default function RoutesScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Nueva Ruta</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <X color={Colors.text} size={24} />
+                  <Ionicons name="close" color={Colors.text} size={24} />
                 </TouchableOpacity>
               </View>
 
