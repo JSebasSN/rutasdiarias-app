@@ -10,12 +10,19 @@ export default async (req, context) => {
     
     console.log('[Netlify Function] Environment check:', {
       hasDbUrl: !!process.env.DATABASE_URL,
+      hasNetlifyDbUrl: !!process.env.NETLIFY_DATABASE_URL,
       nodeEnv: process.env.NODE_ENV,
     });
 
     const url = new URL(req.url);
     const originalPath = url.pathname;
-    const path = url.pathname.replace(/^\/\.netlify\/functions\/api/, '');
+    
+    let path = url.pathname.replace(/^\/\.netlify\/functions\/api/, '');
+    
+    if (path.startsWith('/api')) {
+      path = path.substring(4);
+    }
+    
     url.pathname = path || '/';
     
     console.log('[Netlify Function] Path transformation:', {
