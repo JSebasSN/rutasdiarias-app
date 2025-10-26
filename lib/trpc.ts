@@ -3,7 +3,16 @@ import { httpLink } from "@trpc/client";
 import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
 
-export const trpc = createTRPCReact<AppRouter>();
+export const trpc = createTRPCReact<AppRouter>({
+  overrides: {
+    useMutation: {
+      async onSuccess(opts) {
+        await opts.originalFn();
+        await opts.queryClient.invalidateQueries();
+      },
+    },
+  },
+});
 
 const getBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
