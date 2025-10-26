@@ -1,8 +1,5 @@
-import { handle } from 'hono/vercel';
 import app from '../backend/hono';
 
-export const config = {
-  runtime: 'edge',
+export default async (req, context) => {
+  return app.fetch(req, {}, context);
 };
-
-export default handle(app);
