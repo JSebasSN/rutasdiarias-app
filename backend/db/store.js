@@ -1,19 +1,6 @@
 const { sql } = require('./neon-client');
 
-const DEFAULT_ROUTES = [
-  { id: '1', name: 'ZARAGOZA', type: 'TRAILER' },
-  { id: '2', name: 'ALMERIA', type: 'TRAILER' },
-  { id: '3', name: 'MADRID', type: 'TRAILER' },
-  { id: '4', name: 'VALENCIA', type: 'TRAILER' },
-  { id: '5', name: 'MALAGA', type: 'TRAILER' },
-  { id: '6', name: 'CORDOBA', type: 'TRAILER' },
-  { id: '7', name: 'ALICANTE', type: 'TRAILER' },
-  { id: '8', name: 'CASTELLON', type: 'TRAILER' },
-  { id: '9', name: 'PALMA', type: 'TRAILER' },
-  { id: '10', name: 'PALMA', type: 'FURGO' },
-  { id: '11', name: 'MENORCA', type: 'FURGO' },
-  { id: '12', name: 'IBIZA', type: 'FURGO' },
-];
+
 
 let migrationDone = false;
 let migrationInProgress = false;
@@ -126,22 +113,6 @@ class NeonStore {
       console.log('[Store] Getting routes...');
       const rows = await sql`SELECT * FROM route_templates ORDER BY created_at DESC`;
       console.log('[Store] Retrieved', rows.length, 'routes');
-      
-      if (rows.length === 0) {
-        console.log('[Store] No routes found, inserting defaults');
-        for (const route of DEFAULT_ROUTES) {
-          try {
-            await sql`
-              INSERT INTO route_templates (id, name, type)
-              VALUES (${route.id}, ${route.name}, ${route.type})
-              ON CONFLICT (id) DO NOTHING
-            `;
-          } catch (err) {
-            console.error('[Store] Error inserting route:', route.id, err?.message);
-          }
-        }
-        return DEFAULT_ROUTES;
-      }
       
       return rows.map((row) => ({
         id: row.id,
