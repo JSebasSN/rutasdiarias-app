@@ -25,6 +25,7 @@ const MAX_CONTENT_WIDTH = 1200;
 export default function NewRecordScreen() {
   const { 
     routes, 
+    records,
     addRecord, 
     isAddingRecord, 
     savedDrivers, 
@@ -52,7 +53,15 @@ export default function NewRecordScreen() {
   const [vanModalVisible, setVanModalVisible] = useState<boolean>(false);
   const [selectedDriverIndex, setSelectedDriverIndex] = useState<number>(0);
 
-  const selectedRoute = routes.find((r) => r.id === selectedRouteId);
+  const today = new Date().toISOString().split('T')[0];
+  
+  const availableRoutes = useMemo(() => {
+    const recordsToday = records.filter(record => record.date === today);
+    const routeIdsWithRecordsToday = new Set(recordsToday.map(record => record.routeTemplateId));
+    return routes.filter(route => !routeIdsWithRecordsToday.has(route.id));
+  }, [routes, records, today]);
+
+  const selectedRoute = availableRoutes.find((r) => r.id === selectedRouteId);
   const isTrailer = selectedRoute?.type === 'TRAILER';
 
   const addDriver = () => {
@@ -275,57 +284,68 @@ export default function NewRecordScreen() {
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>Seleccionar Ruta</Text>
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{routes.length} disponibles</Text>
+                  <Text style={styles.badgeText}>{availableRoutes.length} disponibles hoy</Text>
                 </View>
               </View>
               
-              <View style={styles.routeGrid}>
-                {routes.map((route) => {
-                  const isTrailerType = route.type === 'TRAILER';
-                  return (
-                    <TouchableOpacity
-                      key={route.id}
-                      style={[
-                        styles.routeCard,
-                        isTrailerType ? styles.routeCardTrailer : styles.routeCardVan,
-                        selectedRouteId === route.id && styles.routeCardSelected,
-                        selectedRouteId === route.id && (isTrailerType ? styles.routeCardSelectedTrailer : styles.routeCardSelectedVan),
-                        IS_WEB && styles.routeCardWeb,
-                      ]}
-                      onPress={() => setSelectedRouteId(route.id)}
-                    >
-                      <View style={[
-                        styles.routeTypeTag,
-                        isTrailerType ? styles.routeTypeTagTrailer : styles.routeTypeTagVan,
-                        selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTagSelectedTrailer : styles.routeTypeTagSelectedVan),
-                      ]}>
-                        <Ionicons 
-                          name={isTrailerType ? "cube-outline" : "car-outline"} 
-                          size={12} 
-                          color={selectedRouteId === route.id 
-                            ? (isTrailerType ? '#7c3aed' : '#059669') 
-                            : (isTrailerType ? '#a78bfa' : '#34d399')
-                          } 
-                          style={{ marginRight: 4 }}
-                        />
-                        <Text style={[
-                          styles.routeTypeText,
-                          isTrailerType ? styles.routeTypeTextTrailer : styles.routeTypeTextVan,
-                          selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTextSelectedTrailer : styles.routeTypeTextSelectedVan),
+              {availableRoutes.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="checkmark-circle-outline" color={Colors.success} size={48} />
+                  <Text style={styles.emptyStateTitle}>¡Todo listo!</Text>
+                  <Text style={styles.emptyStateText}>
+                    Ya has creado registros para todas las rutas disponibles hoy.
+                    Las rutas volverán a estar disponibles mañana.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.routeGrid}>
+                  {availableRoutes.map((route) => {
+                    const isTrailerType = route.type === 'TRAILER';
+                    return (
+                      <TouchableOpacity
+                        key={route.id}
+                        style={[
+                          styles.routeCard,
+                          isTrailerType ? styles.routeCardTrailer : styles.routeCardVan,
+                          selectedRouteId === route.id && styles.routeCardSelected,
+                          selectedRouteId === route.id && (isTrailerType ? styles.routeCardSelectedTrailer : styles.routeCardSelectedVan),
+                          IS_WEB && styles.routeCardWeb,
+                        ]}
+                        onPress={() => setSelectedRouteId(route.id)}
+                      >
+                        <View style={[
+                          styles.routeTypeTag,
+                          isTrailerType ? styles.routeTypeTagTrailer : styles.routeTypeTagVan,
+                          selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTagSelectedTrailer : styles.routeTypeTagSelectedVan),
                         ]}>
-                          {isTrailerType ? 'TRÁILER' : 'FURGONETA'}
+                          <Ionicons 
+                            name={isTrailerType ? "cube-outline" : "car-outline"} 
+                            size={12} 
+                            color={selectedRouteId === route.id 
+                              ? (isTrailerType ? '#7c3aed' : '#059669') 
+                              : (isTrailerType ? '#a78bfa' : '#34d399')
+                            } 
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={[
+                            styles.routeTypeText,
+                            isTrailerType ? styles.routeTypeTextTrailer : styles.routeTypeTextVan,
+                            selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTextSelectedTrailer : styles.routeTypeTextSelectedVan),
+                          ]}>
+                            {isTrailerType ? 'TRÁILER' : 'FURGONETA'}
+                          </Text>
+                        </View>
+                        <Text style={[
+                          styles.routeName,
+                          selectedRouteId === route.id && styles.routeNameSelected,
+                        ]}>
+                          {route.name}
                         </Text>
-                      </View>
-                      <Text style={[
-                        styles.routeName,
-                        selectedRouteId === route.id && styles.routeNameSelected,
-                      ]}>
-                        {route.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
             </View>
 
             {selectedRoute && (
@@ -1150,5 +1170,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
     fontWeight: '500' as const,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: IS_WEB ? 40 : 32,
+    paddingHorizontal: 20,
+  },
+  emptyStateTitle: {
+    fontSize: IS_WEB ? 20 : 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
