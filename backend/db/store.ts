@@ -1,5 +1,4 @@
 import { RouteTemplate, RouteRecord, SavedDriver, SavedTractor, SavedTrailer, SavedVan } from '@/types/routes';
-import { DEFAULT_ROUTES } from '@/constants/defaultRoutes';
 import { sql } from './neon-client';
 
 class NeonStore {
@@ -8,18 +7,6 @@ class NeonStore {
       console.log('[Store] Getting routes...');
       const rows = await sql`SELECT * FROM route_templates ORDER BY created_at DESC` as any[];
       console.log('[Store] Retrieved', rows.length, 'routes');
-      
-      if (rows.length === 0) {
-        console.log('[Store] No routes found, inserting defaults');
-        for (const route of DEFAULT_ROUTES) {
-          await sql`
-            INSERT INTO route_templates (id, name, type)
-            VALUES (${route.id}, ${route.name}, ${route.type})
-            ON CONFLICT (id) DO NOTHING
-          `;
-        }
-        return DEFAULT_ROUTES;
-      }
       
       return rows.map((row: any) => ({
         id: row.id,
