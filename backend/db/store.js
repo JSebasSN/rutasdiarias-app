@@ -183,9 +183,34 @@ class NeonStore {
     }
   }
 
+  async checkDuplicateRecord(routeTemplateId, routeType, date) {
+    try {
+      await ensureTables();
+      
+      console.log('[Store] Checking for duplicate record...', { routeTemplateId, routeType, date });
+      const rows = await sql`
+        SELECT id FROM route_records 
+        WHERE route_template_id = ${routeTemplateId} 
+        AND route_type = ${routeType}
+        AND date = ${date}
+        LIMIT 1
+      `;
+      console.log('[Store] Duplicate check result:', rows.length > 0);
+      return rows.length > 0;
+    } catch (error) {
+      console.error('[Store] Error checking duplicate record:', error?.message);
+      throw error;
+    }
+  }
+
   async addRecord(record) {
     try {
       await ensureTables();
+      
+      const isDuplicate = await this.checkDuplicateRecord(record.routeTemplateId, record.routeType, record.date);
+      if (isDuplicate) {
+        throw new Error('Ya existe un registro para esta ruta en la fecha seleccionada');
+      }
       
       await sql`
         INSERT INTO route_records (

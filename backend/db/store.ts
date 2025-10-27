@@ -73,12 +73,13 @@ class NeonStore {
     }
   }
 
-  async checkDuplicateRecord(routeTemplateId: string, date: string): Promise<boolean> {
+  async checkDuplicateRecord(routeTemplateId: string, routeType: 'TRAILER' | 'FURGO', date: string): Promise<boolean> {
     try {
-      console.log('[Store] Checking for duplicate record...', { routeTemplateId, date });
+      console.log('[Store] Checking for duplicate record...', { routeTemplateId, routeType, date });
       const rows = await sql`
         SELECT id FROM route_records 
         WHERE route_template_id = ${routeTemplateId} 
+        AND route_type = ${routeType}
         AND date = ${date}
         LIMIT 1
       ` as any[];

@@ -57,8 +57,10 @@ export default function NewRecordScreen() {
   
   const availableRoutes = useMemo(() => {
     const recordsToday = records.filter(record => record.date === today);
-    const routeIdsWithRecordsToday = new Set(recordsToday.map(record => record.routeTemplateId));
-    return routes.filter(route => !routeIdsWithRecordsToday.has(route.id));
+    const routeKeysWithRecordsToday = new Set(
+      recordsToday.map(record => `${record.routeTemplateId}:${record.routeType}`)
+    );
+    return routes.filter(route => !routeKeysWithRecordsToday.has(`${route.id}:${route.type}`));
   }, [routes, records, today]);
 
   const selectedRoute = availableRoutes.find((r) => r.id === selectedRouteId);
@@ -108,14 +110,15 @@ export default function NewRecordScreen() {
     try {
       const today = new Date().toISOString().split('T')[0];
       const isDuplicate = await trpcClient.records.checkDuplicateRecord.query({ 
-        routeTemplateId: selectedRoute.id, 
+        routeTemplateId: selectedRoute.id,
+        routeType: selectedRoute.type,
         date: today 
       });
 
       if (isDuplicate) {
         Alert.alert(
           'Registro Duplicado', 
-          `Ya existe un registro para la ruta "${selectedRoute.name}" en el día de hoy. No puedes crear el mismo registro dos veces en el mismo día.`,
+          `Ya existe un registro para la ruta "${selectedRoute.name}" (${selectedRoute.type === 'TRAILER' ? 'Tráiler' : 'Furgoneta'}) en el día de hoy. No puedes crear el mismo registro dos veces en el mismo día.`,
           [{ text: 'Entendido' }]
         );
         return;
