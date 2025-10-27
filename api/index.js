@@ -1,6 +1,6 @@
-import app from '../backend/hono';
+const app = require('../backend/hono.js');
 
-export const handler = async (req, context) => {
+exports.handler = async (req, context) => {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(7);
   
@@ -16,7 +16,6 @@ export const handler = async (req, context) => {
     console.log('[Netlify Function] Environment check:', {
       hasDbUrl: !!process.env.DATABASE_URL,
       hasNetlifyDbUrl: !!process.env.NETLIFY_DATABASE_URL,
-      netlifyDbUrlPrefix: process.env.NETLIFY_DATABASE_URL ? process.env.NETLIFY_DATABASE_URL.substring(0, 20) : 'N/A',
       nodeEnv: process.env.NODE_ENV,
     });
 
@@ -38,8 +37,6 @@ export const handler = async (req, context) => {
     console.log('[Netlify Function] Path transformation:', {
       original: originalPath,
       rewritten: path,
-      search: url.search,
-      fullUrl: url.toString(),
     });
 
     let body = undefined;
@@ -48,7 +45,6 @@ export const handler = async (req, context) => {
         const text = await req.text();
         if (text) {
           console.log('[Netlify Function] Request body length:', text.length);
-          console.log('[Netlify Function] Request body preview:', text.substring(0, 200));
           body = text;
         }
       } catch (error) {
@@ -65,7 +61,7 @@ export const handler = async (req, context) => {
     });
     
     const response = await Promise.race([
-      app.fetch(newReq, {}, context),
+      app.default.fetch(newReq, {}, context),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout after 25 seconds')), 25000)
       )
@@ -80,26 +76,6 @@ export const handler = async (req, context) => {
       honoDuration: `${honoDuration}ms`,
       totalDuration: `${duration}ms`,
     });
-    
-    if (response.status >= 400) {
-      try {
-        const responseText = await response.text();
-        console.error('[Netlify Function] Error response body:', responseText);
-        
-        const responseHeaders = new Headers(response.headers);
-        responseHeaders.set('Access-Control-Allow-Origin', '*');
-        responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        
-        return new Response(responseText, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: responseHeaders,
-        });
-      } catch (err) {
-        console.error('[Netlify Function] Error reading error response:', err);
-      }
-    }
     
     const responseHeaders = new Headers(response.headers);
     responseHeaders.set('Access-Control-Allow-Origin', '*');
@@ -117,11 +93,9 @@ export const handler = async (req, context) => {
     const duration = Date.now() - startTime;
     console.error('[Netlify Function] ========== ERROR ==========');
     console.error('[Netlify Function] Request ID:', requestId);
-    console.error('[Netlify Function] Error in API handler after', duration, 'ms:');
+    console.error('[Netlify Function] Error after', duration, 'ms:');
     console.error('[Netlify Function] Error message:', error?.message);
     console.error('[Netlify Function] Error stack:', error?.stack);
-    console.error('[Netlify Function] Error name:', error?.name);
-    console.error('[Netlify Function] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     
     return new Response(JSON.stringify({ 
       error: error?.message || 'Unknown error',

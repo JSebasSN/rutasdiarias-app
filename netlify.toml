@@ -9,7 +9,7 @@
   external_node_modules = ["@neondatabase/serverless"]
 
 [functions."api"]
-  included_files = ["backend/**"]
+  included_files = ["backend/**/*.js"]
 
 [[redirects]]
   from = "/api/*"
