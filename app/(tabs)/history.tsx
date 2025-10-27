@@ -28,6 +28,7 @@ export default function HistoryScreen() {
   const [recordToEdit, setRecordToEdit] = useState<RouteRecord | null>(null);
   const [editedDepartureTime, setEditedDepartureTime] = useState<string>('');
   const [editedSeal, setEditedSeal] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const sortedRecords = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -51,7 +52,17 @@ export default function HistoryScreen() {
     return new Date(b).getTime() - new Date(a).getTime();
   });
 
-  const filteredRecords = recordsByDate.get(selectedDate) || [];
+  const recordsForDate = recordsByDate.get(selectedDate) || [];
+  
+  const filteredRecords = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return recordsForDate;
+    }
+    const query = searchQuery.toLowerCase();
+    return recordsForDate.filter(record => 
+      record.routeName.toLowerCase().includes(query)
+    );
+  }, [recordsForDate, searchQuery]);
 
   const handleDelete = (recordId: string) => {
     setRecordToDelete(recordId);
@@ -153,11 +164,29 @@ export default function HistoryScreen() {
           </ScrollView>
         </View>
 
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" color={Colors.textSecondary} size={20} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar ruta..."
+            placeholderTextColor={Colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" color={Colors.textSecondary} size={20} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {filteredRecords.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="document-text-outline" color={Colors.textSecondary} size={64} />
-              <Text style={styles.emptyText}>No hay registros para esta fecha</Text>
+              <Ionicons name={searchQuery ? "search-outline" : "document-text-outline"} color={Colors.textSecondary} size={64} />
+              <Text style={styles.emptyText}>
+                {searchQuery ? 'No se encontraron rutas' : 'No hay registros para esta fecha'}
+              </Text>
             </View>
           ) : (
             <View style={styles.recordsList}>
@@ -388,6 +417,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: IS_WEB ? 20 : 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    marginHorizontal: IS_WEB ? 20 : 16,
+    marginTop: IS_WEB ? 16 : 12,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: IS_WEB ? 14 : 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    gap: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: Colors.text,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none' as any,
+    }),
+  },
+  clearButton: {
+    padding: 4,
   },
   dateButton: {
     alignItems: 'center',
