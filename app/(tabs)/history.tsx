@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,7 @@ export default function HistoryScreen() {
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [recordToEdit, setRecordToEdit] = useState<RouteRecord | null>(null);
   const [editedDepartureTime, setEditedDepartureTime] = useState<string>('');
+  const [editedSeal, setEditedSeal] = useState<string>('');
 
   const sortedRecords = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -72,6 +74,7 @@ export default function HistoryScreen() {
   const handleEdit = (record: RouteRecord) => {
     setRecordToEdit(record);
     setEditedDepartureTime(record.departureTime || '');
+    setEditedSeal(record.seal);
     setEditModalVisible(true);
   };
 
@@ -80,10 +83,12 @@ export default function HistoryScreen() {
       updateRecord({
         ...recordToEdit,
         departureTime: editedDepartureTime,
+        seal: editedSeal,
       });
       setEditModalVisible(false);
       setRecordToEdit(null);
       setEditedDepartureTime('');
+      setEditedSeal('');
     }
   };
 
@@ -91,6 +96,7 @@ export default function HistoryScreen() {
     setEditModalVisible(false);
     setRecordToEdit(null);
     setEditedDepartureTime('');
+    setEditedSeal('');
   };
 
   return (
@@ -273,6 +279,20 @@ export default function HistoryScreen() {
                         minute: '2-digit',
                       })}
                     </Text>
+                  </View>
+
+                  <View style={styles.editSection}>
+                    <Text style={styles.editSectionTitle}>Número de precinto</Text>
+                    <View style={styles.sealInputContainer}>
+                      <Ionicons name="lock-closed-outline" color={Colors.textSecondary} size={20} />
+                      <TextInput
+                        style={styles.sealInput}
+                        value={editedSeal}
+                        onChangeText={setEditedSeal}
+                        placeholder="Ingrese el número de precinto"
+                        placeholderTextColor={Colors.textSecondary}
+                      />
+                    </View>
                   </View>
 
                   <View style={styles.editSection}>
@@ -663,6 +683,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text,
     fontWeight: '600' as const,
+  },
+  sealInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: Colors.border,
+  },
+  sealInput: {
+    flex: 1,
+    fontSize: 16,
+    color: Colors.text,
+    fontWeight: '600' as const,
+    paddingVertical: 16,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none' as any,
+    }),
   },
   editModalButtons: {
     flexDirection: 'row',
