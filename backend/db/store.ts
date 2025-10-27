@@ -5,10 +5,13 @@ import { sql, ensureTablesExist } from './neon-client';
 class NeonStore {
   async getRoutes(): Promise<RouteTemplate[]> {
     try {
+      console.log('[Store] Getting routes...');
       await ensureTablesExist();
       const rows = await sql`SELECT * FROM route_templates ORDER BY created_at DESC` as any[];
+      console.log('[Store] Retrieved', rows.length, 'routes');
       
       if (rows.length === 0) {
+        console.log('[Store] No routes found, inserting defaults');
         for (const route of DEFAULT_ROUTES) {
           await sql`
             INSERT INTO route_templates (id, name, type)
@@ -25,8 +28,9 @@ class NeonStore {
         type: row.type as 'TRAILER' | 'FURGO',
       }));
     } catch (error) {
-      console.error('Error getting routes:', error);
-      return DEFAULT_ROUTES;
+      console.error('[Store] Error getting routes:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
@@ -57,11 +61,13 @@ class NeonStore {
 
   async getRecords(): Promise<RouteRecord[]> {
     try {
+      console.log('[Store] Getting records...');
       await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM route_records 
         ORDER BY created_at DESC
       ` as any[];
+      console.log('[Store] Retrieved', rows.length, 'records');
       
       return rows.map((row: any) => ({
         id: row.id,
@@ -78,8 +84,9 @@ class NeonStore {
         departureTime: row.departure_time,
       }));
     } catch (error) {
-      console.error('Error getting records:', error);
-      return [];
+      console.error('[Store] Error getting records:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
@@ -144,11 +151,13 @@ class NeonStore {
 
   async getDrivers(): Promise<SavedDriver[]> {
     try {
+      console.log('[Store] Getting drivers...');
       await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_drivers 
         ORDER BY last_used DESC
       ` as any[];
+      console.log('[Store] Retrieved', rows.length, 'drivers');
       
       return rows.map((row: any) => ({
         id: row.id,
@@ -160,8 +169,9 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('Error getting drivers:', error);
-      return [];
+      console.error('[Store] Error getting drivers:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
@@ -189,11 +199,13 @@ class NeonStore {
 
   async getTractors(): Promise<SavedTractor[]> {
     try {
+      console.log('[Store] Getting tractors...');
       await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_tractors 
         ORDER BY last_used DESC
       ` as any[];
+      console.log('[Store] Retrieved', rows.length, 'tractors');
       
       return rows.map((row: any) => ({
         id: row.id,
@@ -203,8 +215,9 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('Error getting tractors:', error);
-      return [];
+      console.error('[Store] Error getting tractors:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
@@ -230,11 +243,13 @@ class NeonStore {
 
   async getTrailers(): Promise<SavedTrailer[]> {
     try {
+      console.log('[Store] Getting trailers...');
       await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_trailers 
         ORDER BY last_used DESC
       ` as any[];
+      console.log('[Store] Retrieved', rows.length, 'trailers');
       
       return rows.map((row: any) => ({
         id: row.id,
@@ -244,8 +259,9 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('Error getting trailers:', error);
-      return [];
+      console.error('[Store] Error getting trailers:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
@@ -271,11 +287,13 @@ class NeonStore {
 
   async getVans(): Promise<SavedVan[]> {
     try {
+      console.log('[Store] Getting vans...');
       await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_vans 
         ORDER BY last_used DESC
       ` as any[];
+      console.log('[Store] Retrieved', rows.length, 'vans');
       
       return rows.map((row: any) => ({
         id: row.id,
@@ -285,8 +303,9 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('Error getting vans:', error);
-      return [];
+      console.error('[Store] Error getting vans:', error);
+      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
   }
 
