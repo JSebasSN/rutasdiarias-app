@@ -80,11 +80,18 @@ export default function HistoryScreen() {
 
   const saveEdit = async () => {
     if (recordToEdit) {
-      await updateRecord({
+      const updateData: RouteRecord = {
         ...recordToEdit,
-        departureTime: editedDepartureTime,
+        departureTime: editedDepartureTime || undefined,
         seal: editedSeal,
-      });
+        createdAt: typeof recordToEdit.createdAt === 'string' 
+          ? recordToEdit.createdAt 
+          : new Date(recordToEdit.createdAt).toISOString(),
+        vehiclePlate: recordToEdit.routeType === 'FURGO' ? recordToEdit.vehiclePlate : undefined,
+        tractorPlate: recordToEdit.routeType === 'TRAILER' ? recordToEdit.tractorPlate : undefined,
+        trailerPlate: recordToEdit.routeType === 'TRAILER' ? recordToEdit.trailerPlate : undefined,
+      };
+      await updateRecord(updateData);
       setEditModalVisible(false);
       setRecordToEdit(null);
       setEditedDepartureTime('');
