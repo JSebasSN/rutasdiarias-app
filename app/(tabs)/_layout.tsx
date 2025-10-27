@@ -16,10 +16,17 @@ export default function TabLayout() {
           backgroundColor: Colors.card,
           borderTopWidth: 1,
           borderTopColor: Colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600' as const,
+          marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
         },
       }}
     >
@@ -27,21 +34,21 @@ export default function TabLayout() {
         name="new-record"
         options={{
           title: "Nuevo",
-          tabBarIcon: ({ color }) => <Ionicons name="add" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "Historial",
-          tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="routes"
         options={{
           title: "Rutas",
-          tabBarIcon: ({ color }) => <Ionicons name="map-outline" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="map-outline" color={color} size={22} />,
         }}
       />
     </Tabs>
