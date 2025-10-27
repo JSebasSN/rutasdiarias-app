@@ -7,14 +7,15 @@ function getSql() {
     const databaseUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
     
     if (!databaseUrl) {
-      console.error('[DB] Database URL not found. Checked NETLIFY_DATABASE_URL and DATABASE_URL');
-      console.error('[DB] Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('NETLIFY')));
-      throw new Error('Database URL environment variable is not set');
+      console.error('[DB] ERROR: Database URL not found');
+      console.error('[DB] Checked: NETLIFY_DATABASE_URL, DATABASE_URL');
+      console.error('[DB] Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('NETLIFY')).join(', '));
+      throw new Error('Database URL environment variable is not set. Please configure NETLIFY_DATABASE_URL in Netlify dashboard.');
     }
     
-    console.log('[DB] Initializing database connection');
-    console.log('[DB] Database URL is configured:', !!databaseUrl);
+    console.log('[DB] Initializing Neon database connection');
     console.log('[DB] Using NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
+    console.log('[DB] Using DATABASE_URL:', !!process.env.DATABASE_URL);
     
     try {
       sqlInstance = neon(databaseUrl, {

@@ -8,19 +8,13 @@ const { runMigrations } = require("./db/migrate");
 const app = new Hono();
 
 let migrationPromise = null;
-let migrationCompleted = false;
 
 function ensureMigrations() {
-  if (migrationCompleted) {
-    return Promise.resolve();
-  }
   if (!migrationPromise) {
-    migrationPromise = runMigrations().then(() => {
-      migrationCompleted = true;
-    }).catch((error) => {
+    migrationPromise = runMigrations().catch((error) => {
       console.error('[App] Migration failed:', error);
       migrationPromise = null;
-      throw error;
+      return null;
     });
   }
   return migrationPromise;
@@ -40,17 +34,23 @@ app.options("*", (c) => {
 
 app.use("*", async (c, next) => {
   const startTime = Date.now();
-  console.log('[Hono] Request:', c.req.method, c.req.url, c.req.path);
+  const path = c.req.path;
+  console.log('[Hono] Request:', c.req.method, path);
+  
   try {
-    if (c.req.path.startsWith('/trpc/')) {
+    if (path.startsWith('/trpc/')) {
+      console.log('[Hono] Ensuring migrations before tRPC request');
       await ensureMigrations();
     }
+    
     await next();
+    
     const duration = Date.now() - startTime;
-    console.log('[Hono] Response status:', c.res.status, 'in', duration, 'ms');
+    console.log('[Hono] Response:', c.res.status, 'in', duration, 'ms');
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error('[Hono] Error after', duration, 'ms:', error);
+    console.error('[Hono] Error stack:', error?.stack);
     throw error;
   }
 });
@@ -61,7 +61,8 @@ app.use(
     router: appRouter,
     createContext,
     onError({ error, type, path }) {
-      console.error(`[tRPC Error] ${type} at ${path}:`, error);
+      console.error(`[tRPC Error] ${type} at ${path}:`);
+      console.error('[tRPC Error] Message:', error?.message);
       console.error('[tRPC Error] Stack:', error?.stack);
       console.error('[tRPC Error] Cause:', error?.cause);
     },
@@ -95,6 +96,7 @@ app.get("/debug", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
+    console.error('[Debug] Error:', error);
     return c.json({
       status: "error",
       error: error?.message,
@@ -111,7 +113,7 @@ app.get("/test-db", async (c) => {
     
     console.log('[Test DB] Executing query...');
     const result = await sql`SELECT NOW() as current_time, version() as postgres_version`;
-    console.log('[Test DB] Query successful');
+    console.log('[Test DB] Query successful:', result);
     
     return c.json({
       status: "ok",
@@ -136,13 +138,19 @@ app.get("/test-db", async (c) => {
 });
 
 app.notFound((c) => {
-  console.log('[Hono] Not Found:', c.req.method, c.req.url, c.req.path);
-  return c.json({ error: "Not Found", path: c.req.path, url: c.req.url }, 404);
+  console.log('[Hono] Not Found:', c.req.method, c.req.path);
+  return c.json({ error: "Not Found", path: c.req.path }, 404);
 });
 
 app.onError((err, c) => {
-  console.error('[Hono] Error:', err);
-  return c.json({ error: err.message, stack: err.stack }, 500);
+  console.error('[Hono] Global Error Handler:', err);
+  console.error('[Hono] Error message:', err?.message);
+  console.error('[Hono] Error stack:', err?.stack);
+  
+  return c.json({ 
+    error: err?.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined,
+  }, 500);
 });
 
 module.exports = { default: app };

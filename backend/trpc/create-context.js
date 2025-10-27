@@ -8,7 +8,7 @@ const createContext = async (opts) => {
 };
 
 const t = initTRPC.context().create({
-  transformer: superjson.default,
+  transformer: superjson,
 });
 
 const createTRPCRouter = t.router;

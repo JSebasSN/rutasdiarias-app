@@ -5,19 +5,16 @@ exports.handler = async (req, context) => {
   const requestId = Math.random().toString(36).substring(7);
   
   try {
-    console.log('[Netlify Function] ========== NEW REQUEST ==========');
+    console.log('========================================');
     console.log('[Netlify Function] Request ID:', requestId);
-    console.log('[Netlify Function] Received request:', {
-      method: req.method,
-      url: req.url,
-      timestamp: new Date().toISOString(),
-    });
+    console.log('[Netlify Function] Method:', req.method);
+    console.log('[Netlify Function] URL:', req.url);
+    console.log('[Netlify Function] Time:', new Date().toISOString());
     
-    console.log('[Netlify Function] Environment check:', {
-      hasDbUrl: !!process.env.DATABASE_URL,
-      hasNetlifyDbUrl: !!process.env.NETLIFY_DATABASE_URL,
-      nodeEnv: process.env.NODE_ENV,
-    });
+    console.log('[Netlify Function] Environment:');
+    console.log('  - NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL ? 'SET' : 'NOT SET');
+    console.log('  - DATABASE_URL:', !!process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV);
 
     const url = new URL(req.url);
     const originalPath = url.pathname;
@@ -34,17 +31,14 @@ exports.handler = async (req, context) => {
     
     url.pathname = path;
     
-    console.log('[Netlify Function] Path transformation:', {
-      original: originalPath,
-      rewritten: path,
-    });
+    console.log('[Netlify Function] Path:', originalPath, '->', path);
 
     let body = undefined;
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
       try {
         const text = await req.text();
         if (text) {
-          console.log('[Netlify Function] Request body length:', text.length);
+          console.log('[Netlify Function] Body length:', text.length);
           body = text;
         }
       } catch (error) {
@@ -52,8 +46,9 @@ exports.handler = async (req, context) => {
       }
     }
     
-    console.log('[Netlify Function] Calling Hono app...');
+    console.log('[Netlify Function] Calling Hono...');
     const honoStartTime = Date.now();
+    
     const newReq = new Request(url.toString(), {
       method: req.method,
       headers: req.headers,
@@ -63,26 +58,22 @@ exports.handler = async (req, context) => {
     const response = await Promise.race([
       app.default.fetch(newReq, {}, context),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout after 25 seconds')), 25000)
+        setTimeout(() => reject(new Error('Request timeout after 20 seconds')), 20000)
       )
     ]);
-    const honoDuration = Date.now() - honoStartTime;
-    const duration = Date.now() - startTime;
     
-    console.log('[Netlify Function] Response:', {
-      requestId,
-      status: response.status,
-      statusText: response.statusText,
-      honoDuration: `${honoDuration}ms`,
-      totalDuration: `${duration}ms`,
-    });
+    const honoDuration = Date.now() - honoStartTime;
+    const totalDuration = Date.now() - startTime;
+    
+    console.log('[Netlify Function] Response Status:', response.status);
+    console.log('[Netlify Function] Hono Duration:', honoDuration, 'ms');
+    console.log('[Netlify Function] Total Duration:', totalDuration, 'ms');
+    console.log('========================================');
     
     const responseHeaders = new Headers(response.headers);
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    console.log('[Netlify Function] Request', requestId, 'completed successfully in', duration, 'ms');
     
     return new Response(response.body, {
       status: response.status,
@@ -91,19 +82,21 @@ exports.handler = async (req, context) => {
     });
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('[Netlify Function] ========== ERROR ==========');
-    console.error('[Netlify Function] Request ID:', requestId);
-    console.error('[Netlify Function] Error after', duration, 'ms:');
-    console.error('[Netlify Function] Error message:', error?.message);
-    console.error('[Netlify Function] Error stack:', error?.stack);
+    console.error('========================================');
+    console.error('[Netlify Function] ERROR - Request ID:', requestId);
+    console.error('[Netlify Function] Duration:', duration, 'ms');
+    console.error('[Netlify Function] Error Name:', error?.name);
+    console.error('[Netlify Function] Error Message:', error?.message);
+    console.error('[Netlify Function] Error Stack:', error?.stack);
+    console.error('========================================');
     
     return new Response(JSON.stringify({ 
-      error: error?.message || 'Unknown error',
+      error: error?.message || 'Internal Server Error',
       name: error?.name,
-      stack: error?.stack,
       requestId,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
     }, null, 2), {
       status: 500,
       headers: { 
