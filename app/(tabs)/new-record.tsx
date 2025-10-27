@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRoutes } from '@/contexts/RoutesContext';
 import { Driver, RouteRecord } from '@/types/routes';
 import Colors from '@/constants/colors';
+import { trpcClient } from '@/lib/trpc';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IS_WEB = Platform.OS === 'web';
@@ -92,6 +93,27 @@ export default function NewRecordScreen() {
 
     if (!seal.trim()) {
       Alert.alert('Error', 'Completa el número de precinto');
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const isDuplicate = await trpcClient.records.checkDuplicateRecord.query({ 
+        routeTemplateId: selectedRoute.id, 
+        date: today 
+      });
+
+      if (isDuplicate) {
+        Alert.alert(
+          'Registro Duplicado', 
+          `Ya existe un registro para la ruta "${selectedRoute.name}" en el día de hoy. No puedes crear el mismo registro dos veces en el mismo día.`,
+          [{ text: 'Entendido' }]
+        );
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking duplicate:', error);
+      Alert.alert('Error', 'No se pudo verificar registros duplicados');
       return;
     }
 

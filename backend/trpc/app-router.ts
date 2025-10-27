@@ -72,9 +72,22 @@ export const appRouter = createTRPCRouter({
       return store.getRecords();
     }),
     
+    checkDuplicateRecord: publicProcedure
+      .input(z.object({ 
+        routeTemplateId: z.string(),
+        date: z.string(),
+      }))
+      .query(({ input }) => {
+        return store.checkDuplicateRecord(input.routeTemplateId, input.date);
+      }),
+    
     addRecord: publicProcedure
       .input(routeRecordSchema)
-      .mutation(({ input }) => {
+      .mutation(async ({ input }) => {
+        const isDuplicate = await store.checkDuplicateRecord(input.routeTemplateId, input.date);
+        if (isDuplicate) {
+          throw new Error('Ya existe un registro para esta ruta en la fecha seleccionada');
+        }
         return store.addRecord(input);
       }),
     

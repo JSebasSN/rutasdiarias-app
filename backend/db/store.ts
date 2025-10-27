@@ -73,6 +73,23 @@ class NeonStore {
     }
   }
 
+  async checkDuplicateRecord(routeTemplateId: string, date: string): Promise<boolean> {
+    try {
+      console.log('[Store] Checking for duplicate record...', { routeTemplateId, date });
+      const rows = await sql`
+        SELECT id FROM route_records 
+        WHERE route_template_id = ${routeTemplateId} 
+        AND date = ${date}
+        LIMIT 1
+      ` as any[];
+      console.log('[Store] Duplicate check result:', rows.length > 0);
+      return rows.length > 0;
+    } catch (error) {
+      console.error('[Store] Error checking duplicate record:', error);
+      throw error;
+    }
+  }
+
   async addRecord(record: RouteRecord): Promise<RouteRecord> {
     try {
       await sql`
