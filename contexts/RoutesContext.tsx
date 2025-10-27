@@ -14,7 +14,7 @@ type RoutesContextType = {
   addRoute: (route: RouteTemplate) => void;
   deleteRoute: (routeId: string) => void;
   addRecord: (record: RouteRecord) => void;
-  updateRecord: (record: RouteRecord) => void;
+  updateRecord: (record: RouteRecord) => Promise<void>;
   deleteRecord: (recordId: string) => void;
   saveDriver: (driver: { name: string; dni: string; phone: string; routeId: string }) => void;
   saveTractor: (params: { plate: string; routeId: string }) => Promise<SavedTractor>;
@@ -102,8 +102,8 @@ export function RoutesProvider({ children }: { children: ReactNode }) {
     addRecordMutation.mutate(record);
   }, [addRecordMutation]);
 
-  const handleUpdateRecord = useCallback((record: RouteRecord) => {
-    updateRecordMutation.mutate(record);
+  const handleUpdateRecord = useCallback(async (record: RouteRecord) => {
+    await updateRecordMutation.mutateAsync(record);
   }, [updateRecordMutation]);
 
   const handleDeleteRecord = useCallback((recordId: string) => {

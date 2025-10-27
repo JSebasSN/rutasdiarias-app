@@ -78,9 +78,9 @@ export default function HistoryScreen() {
     setEditModalVisible(true);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (recordToEdit) {
-      updateRecord({
+      await updateRecord({
         ...recordToEdit,
         departureTime: editedDepartureTime,
         seal: editedSeal,
