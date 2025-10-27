@@ -1,23 +1,51 @@
 import { neon } from '@neondatabase/serverless';
 
-const databaseUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+let sqlInstance: ReturnType<typeof neon> | null = null;
 
-if (!databaseUrl) {
-  console.error('Database URL not found. Checked NETLIFY_DATABASE_URL and DATABASE_URL');
-  console.error('Available env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET')));
-  throw new Error('Database URL environment variable is not set');
+export function getSql() {
+  if (!sqlInstance) {
+    const databaseUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      console.error('Database URL not found. Checked NETLIFY_DATABASE_URL and DATABASE_URL');
+      console.error('Available env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET')));
+      throw new Error('Database URL environment variable is not set');
+    }
+    
+    console.log('Initializing database connection');
+    console.log('Database URL is configured:', !!databaseUrl);
+    console.log('Using NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
+    
+    sqlInstance = neon(databaseUrl);
+  }
+  
+  return sqlInstance;
 }
 
-console.log('Database URL is configured:', !!databaseUrl);
-console.log('Using NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
+export const sql = new Proxy({} as ReturnType<typeof neon>, {
+  get(target, prop) {
+    const sqlClient = getSql();
+    return sqlClient[prop as keyof typeof sqlClient];
+  },
+  apply(target, thisArg, argArray) {
+    const sqlClient = getSql();
+    return (sqlClient as any)(...argArray);
+  }
+});
 
-export const sql = neon(databaseUrl);
+let isInitialized = false;
 
-export async function initializeDatabase() {
-  console.log('Initializing database...');
+export async function ensureTablesExist() {
+  if (isInitialized) {
+    return;
+  }
+  
+  console.log('[DB] Ensuring tables exist...');
   
   try {
-    await sql`
+    const sqlClient = getSql();
+    
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS route_templates (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -26,7 +54,7 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS route_records (
         id TEXT PRIMARY KEY,
         date TEXT NOT NULL,
@@ -43,7 +71,7 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS saved_drivers (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -56,7 +84,7 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS saved_tractors (
         id TEXT PRIMARY KEY,
         plate TEXT NOT NULL,
@@ -67,7 +95,7 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS saved_trailers (
         id TEXT PRIMARY KEY,
         plate TEXT NOT NULL,
@@ -78,7 +106,7 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`
+    await sqlClient`
       CREATE TABLE IF NOT EXISTS saved_vans (
         id TEXT PRIMARY KEY,
         plate TEXT NOT NULL,
@@ -89,16 +117,17 @@ export async function initializeDatabase() {
       )
     `;
 
-    await sql`CREATE INDEX IF NOT EXISTS idx_route_records_date ON route_records(date)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_route_records_template_id ON route_records(route_template_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_saved_drivers_route_id ON saved_drivers(route_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_saved_tractors_route_id ON saved_tractors(route_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_saved_trailers_route_id ON saved_trailers(route_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_saved_vans_route_id ON saved_vans(route_id)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_route_records_date ON route_records(date)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_route_records_template_id ON route_records(route_template_id)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_drivers_route_id ON saved_drivers(route_id)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_tractors_route_id ON saved_tractors(route_id)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_trailers_route_id ON saved_trailers(route_id)`;
+    await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_vans_route_id ON saved_vans(route_id)`;
 
-    console.log('Database initialized successfully');
+    isInitialized = true;
+    console.log('[DB] Tables created/verified successfully');
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('[DB] Error ensuring tables exist:', error);
     throw error;
   }
 }

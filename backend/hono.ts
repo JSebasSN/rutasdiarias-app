@@ -3,11 +3,8 @@ import { trpcServer } from "@hono/trpc-server";
 import { cors } from "hono/cors";
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
-import { initializeDatabase } from "./db/neon-client";
 
 const app = new Hono();
-
-initializeDatabase().catch(console.error);
 
 app.use("*", cors({
   origin: '*',
