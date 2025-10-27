@@ -6,15 +6,16 @@ En el panel de Netlify, ve a **Site settings > Environment variables** y agrega:
 
 ### 1. NETLIFY_DATABASE_URL
 - **Valor**: Tu connection string de Neon Database
-- **Formato**: `postgresql://[user]:[password]@[endpoint]/[dbname]`
+- **Formato**: `postgresql://[user]:[password]@[endpoint]/[dbname]?sslmode=require`
 - Esta es la variable que la aplicación usa para conectarse a la base de datos
+- **IMPORTANTE**: Asegúrate de que termine con `?sslmode=require`
 
 ## Build Settings
 
-Ve a **Site settings > Build & deploy > Build settings** y verifica:
+Ve a **Site settings > Build & deploy > Build settings** y configura:
 
 ### 1. Base directory
-- Dejar **vacío** o configurar como raíz del proyecto
+- Dejar **vacío** (raíz del proyecto)
 
 ### 2. Build command
 ```bash
@@ -31,6 +32,10 @@ dist
 api
 ```
 **IMPORTANTE**: Esta casilla debe tener el valor `api` (no dejarla vacía)
+
+### 5. Node version
+- La versión de Node está definida en `.nvmrc` (Node 20)
+- Netlify la detectará automáticamente
 
 ## Configuración Automática
 

@@ -5,7 +5,6 @@ export const handler = async (req, context) => {
     console.log('[Netlify Function] Received request:', {
       method: req.method,
       url: req.url,
-      headers: Object.fromEntries(req.headers.entries()),
     });
     
     console.log('[Netlify Function] Environment check:', {
@@ -23,20 +22,27 @@ export const handler = async (req, context) => {
       path = path.substring(4);
     }
     
-    url.pathname = path || '/';
+    if (!path || path === '/') {
+      path = '/';
+    }
+    
+    url.pathname = path;
     
     console.log('[Netlify Function] Path transformation:', {
       original: originalPath,
       rewritten: path,
+      search: url.search,
       fullUrl: url.toString(),
     });
 
     let body = undefined;
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
       try {
         const text = await req.text();
-        console.log('[Netlify Function] Request body:', text);
-        body = text;
+        if (text) {
+          console.log('[Netlify Function] Request body:', text.substring(0, 200));
+          body = text;
+        }
       } catch (error) {
         console.error('[Netlify Function] Error reading body:', error);
       }
@@ -50,12 +56,21 @@ export const handler = async (req, context) => {
     
     const response = await app.fetch(newReq, {}, context);
     
-    console.log('[Netlify Function] Response status:', response.status);
+    console.log('[Netlify Function] Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+    });
+    
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set('Access-Control-Allow-Origin', '*');
+    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: response.headers,
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error('[Netlify Function] Error in API handler:', error);
@@ -64,7 +79,12 @@ export const handler = async (req, context) => {
       stack: error.stack,
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
     });
   }
 };
