@@ -3,6 +3,11 @@
   publish = "dist"
   functions = "api"
 
+[functions]
+  directory = "api"
+  node_bundler = "esbuild"
+  external_node_modules = ["@neondatabase/serverless"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
@@ -12,10 +17,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-[functions]
-  directory = "api"
-  node_bundler = "esbuild"
 
 [[headers]]
   for = "/*"

@@ -1,6 +1,6 @@
 import app from '../backend/hono';
 
-export default async (req, context) => {
+export const handler = async (req, context) => {
   try {
     console.log('[Netlify Function] Received request:', {
       method: req.method,
