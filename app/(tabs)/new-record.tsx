@@ -258,35 +258,51 @@ export default function NewRecordScreen() {
               </View>
               
               <View style={styles.routeGrid}>
-                {routes.map((route) => (
-                  <TouchableOpacity
-                    key={route.id}
-                    style={[
-                      styles.routeCard,
-                      selectedRouteId === route.id && styles.routeCardSelected,
-                      IS_WEB && styles.routeCardWeb,
-                    ]}
-                    onPress={() => setSelectedRouteId(route.id)}
-                  >
-                    <View style={[
-                      styles.routeTypeTag,
-                      selectedRouteId === route.id && styles.routeTypeTagSelected,
-                    ]}>
-                      <Text style={[
-                        styles.routeTypeText,
-                        selectedRouteId === route.id && styles.routeTypeTextSelected,
+                {routes.map((route) => {
+                  const isTrailerType = route.type === 'TRAILER';
+                  return (
+                    <TouchableOpacity
+                      key={route.id}
+                      style={[
+                        styles.routeCard,
+                        isTrailerType ? styles.routeCardTrailer : styles.routeCardVan,
+                        selectedRouteId === route.id && styles.routeCardSelected,
+                        selectedRouteId === route.id && (isTrailerType ? styles.routeCardSelectedTrailer : styles.routeCardSelectedVan),
+                        IS_WEB && styles.routeCardWeb,
+                      ]}
+                      onPress={() => setSelectedRouteId(route.id)}
+                    >
+                      <View style={[
+                        styles.routeTypeTag,
+                        isTrailerType ? styles.routeTypeTagTrailer : styles.routeTypeTagVan,
+                        selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTagSelectedTrailer : styles.routeTypeTagSelectedVan),
                       ]}>
-                        {route.type === 'TRAILER' ? 'TRÁILER' : 'FURGONETA'}
+                        <Ionicons 
+                          name={isTrailerType ? "cube-outline" : "car-outline"} 
+                          size={12} 
+                          color={selectedRouteId === route.id 
+                            ? (isTrailerType ? '#7c3aed' : '#059669') 
+                            : (isTrailerType ? '#a78bfa' : '#34d399')
+                          } 
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={[
+                          styles.routeTypeText,
+                          isTrailerType ? styles.routeTypeTextTrailer : styles.routeTypeTextVan,
+                          selectedRouteId === route.id && (isTrailerType ? styles.routeTypeTextSelectedTrailer : styles.routeTypeTextSelectedVan),
+                        ]}>
+                          {isTrailerType ? 'TRÁILER' : 'FURGONETA'}
+                        </Text>
+                      </View>
+                      <Text style={[
+                        styles.routeName,
+                        selectedRouteId === route.id && styles.routeNameSelected,
+                      ]}>
+                        {route.name}
                       </Text>
-                    </View>
-                    <Text style={[
-                      styles.routeName,
-                      selectedRouteId === route.id && styles.routeNameSelected,
-                    ]}>
-                      {route.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
@@ -814,6 +830,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  routeCardTrailer: {
+    backgroundColor: '#faf5ff',
+    borderColor: '#e9d5ff',
+  },
+  routeCardVan: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
   routeCardWeb: {
     minWidth: 180,
     maxWidth: '48%',
@@ -822,16 +846,38 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: Colors.primary + '08',
   },
+  routeCardSelectedTrailer: {
+    borderColor: '#7c3aed',
+    backgroundColor: '#f3e8ff',
+  },
+  routeCardSelectedVan: {
+    borderColor: '#059669',
+    backgroundColor: '#d1fae5',
+  },
   routeTypeTag: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.textSecondary + '20',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginBottom: 8,
   },
+  routeTypeTagTrailer: {
+    backgroundColor: '#ede9fe',
+  },
+  routeTypeTagVan: {
+    backgroundColor: '#d1fae5',
+  },
   routeTypeTagSelected: {
     backgroundColor: Colors.primary + '20',
+  },
+  routeTypeTagSelectedTrailer: {
+    backgroundColor: '#ddd6fe',
+  },
+  routeTypeTagSelectedVan: {
+    backgroundColor: '#a7f3d0',
   },
   routeTypeText: {
     fontSize: 10,
@@ -839,8 +885,20 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     letterSpacing: 0.5,
   },
+  routeTypeTextTrailer: {
+    color: '#a78bfa',
+  },
+  routeTypeTextVan: {
+    color: '#34d399',
+  },
   routeTypeTextSelected: {
     color: Colors.primary,
+  },
+  routeTypeTextSelectedTrailer: {
+    color: '#7c3aed',
+  },
+  routeTypeTextSelectedVan: {
+    color: '#059669',
   },
   routeName: {
     fontSize: 15,
