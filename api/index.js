@@ -2,9 +2,11 @@ import app from '../backend/hono';
 
 export const handler = async (req, context) => {
   const startTime = Date.now();
+  const requestId = Math.random().toString(36).substring(7);
   
   try {
     console.log('[Netlify Function] ========== NEW REQUEST ==========');
+    console.log('[Netlify Function] Request ID:', requestId);
     console.log('[Netlify Function] Received request:', {
       method: req.method,
       url: req.url,
@@ -55,19 +57,28 @@ export const handler = async (req, context) => {
     }
     
     console.log('[Netlify Function] Calling Hono app...');
+    const honoStartTime = Date.now();
     const newReq = new Request(url.toString(), {
       method: req.method,
       headers: req.headers,
       body: body,
     });
     
-    const response = await app.fetch(newReq, {}, context);
+    const response = await Promise.race([
+      app.fetch(newReq, {}, context),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout after 25 seconds')), 25000)
+      )
+    ]);
+    const honoDuration = Date.now() - honoStartTime;
     const duration = Date.now() - startTime;
     
     console.log('[Netlify Function] Response:', {
+      requestId,
       status: response.status,
       statusText: response.statusText,
-      duration: `${duration}ms`,
+      honoDuration: `${honoDuration}ms`,
+      totalDuration: `${duration}ms`,
     });
     
     if (response.status >= 400) {
@@ -95,7 +106,7 @@ export const handler = async (req, context) => {
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
-    console.log('[Netlify Function] Request completed successfully in', duration, 'ms');
+    console.log('[Netlify Function] Request', requestId, 'completed successfully in', duration, 'ms');
     
     return new Response(response.body, {
       status: response.status,
@@ -105,6 +116,7 @@ export const handler = async (req, context) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error('[Netlify Function] ========== ERROR ==========');
+    console.error('[Netlify Function] Request ID:', requestId);
     console.error('[Netlify Function] Error in API handler after', duration, 'ms:');
     console.error('[Netlify Function] Error message:', error?.message);
     console.error('[Netlify Function] Error stack:', error?.stack);
@@ -115,7 +127,9 @@ export const handler = async (req, context) => {
       error: error?.message || 'Unknown error',
       name: error?.name,
       stack: error?.stack,
+      requestId,
       duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
     }, null, 2), {
       status: 500,
       headers: { 

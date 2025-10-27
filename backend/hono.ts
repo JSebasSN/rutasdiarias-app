@@ -3,8 +3,28 @@ import { trpcServer } from "@hono/trpc-server";
 import { cors } from "hono/cors";
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
+import { runMigrations } from "./db/migrate";
 
 const app = new Hono();
+
+let migrationPromise: Promise<any> | null = null;
+let migrationCompleted = false;
+
+function ensureMigrations() {
+  if (migrationCompleted) {
+    return Promise.resolve();
+  }
+  if (!migrationPromise) {
+    migrationPromise = runMigrations().then(() => {
+      migrationCompleted = true;
+    }).catch((error) => {
+      console.error('[App] Migration failed:', error);
+      migrationPromise = null;
+      throw error;
+    });
+  }
+  return migrationPromise;
+}
 
 app.use("*", cors({
   origin: '*',
@@ -19,9 +39,20 @@ app.options("*", (c) => {
 });
 
 app.use("*", async (c, next) => {
+  const startTime = Date.now();
   console.log('[Hono] Request:', c.req.method, c.req.url, c.req.path);
-  await next();
-  console.log('[Hono] Response status:', c.res.status);
+  try {
+    if (c.req.path.startsWith('/trpc/')) {
+      await ensureMigrations();
+    }
+    await next();
+    const duration = Date.now() - startTime;
+    console.log('[Hono] Response status:', c.res.status, 'in', duration, 'ms');
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[Hono] Error after', duration, 'ms:', error);
+    throw error;
+  }
 });
 
 app.use(
@@ -31,6 +62,8 @@ app.use(
     createContext,
     onError({ error, type, path }) {
       console.error(`[tRPC Error] ${type} at ${path}:`, error);
+      console.error('[tRPC Error] Stack:', error?.stack);
+      console.error('[tRPC Error] Cause:', error?.cause);
     },
   })
 );
@@ -72,10 +105,13 @@ app.get("/debug", async (c) => {
 
 app.get("/test-db", async (c) => {
   try {
+    console.log('[Test DB] Starting database test...');
     const { getSql } = await import("./db/neon-client");
     const sql = getSql();
     
+    console.log('[Test DB] Executing query...');
     const result = await sql`SELECT NOW() as current_time, version() as postgres_version` as any[];
+    console.log('[Test DB] Query successful');
     
     return c.json({
       status: "ok",
@@ -91,6 +127,10 @@ app.get("/test-db", async (c) => {
       error: error?.message,
       stack: error?.stack,
       code: error?.code,
+      env: {
+        hasNetlifyDbUrl: !!process.env.NETLIFY_DATABASE_URL,
+        hasDbUrl: !!process.env.DATABASE_URL,
+      },
     }, 500);
   }
 });

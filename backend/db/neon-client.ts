@@ -16,7 +16,17 @@ export function getSql() {
     console.log('[DB] Database URL is configured:', !!databaseUrl);
     console.log('[DB] Using NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
     
-    sqlInstance = neon(databaseUrl);
+    try {
+      sqlInstance = neon(databaseUrl, {
+        fetchOptions: {
+          cache: 'no-store',
+        },
+      });
+      console.log('[DB] Database client created successfully');
+    } catch (error) {
+      console.error('[DB] Error creating database client:', error);
+      throw error;
+    }
   }
   
   return sqlInstance;
@@ -32,17 +42,21 @@ let initializationPromise: Promise<void> | null = null;
 
 export async function ensureTablesExist() {
   if (isInitialized) {
+    console.log('[DB] Tables already initialized, skipping');
     return;
   }
   
   if (initializationPromise) {
+    console.log('[DB] Waiting for ongoing initialization...');
     return initializationPromise;
   }
   
   initializationPromise = (async () => {
     try {
-      console.log('[DB] Ensuring tables exist...');
+      console.log('[DB] Starting table initialization...');
+      const startTime = Date.now();
       const sqlClient = getSql();
+      console.log('[DB] SQL client obtained in', Date.now() - startTime, 'ms');
       
       await sqlClient`
         CREATE TABLE IF NOT EXISTS route_templates (
@@ -123,10 +137,16 @@ export async function ensureTablesExist() {
       await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_trailers_route_id ON saved_trailers(route_id)`;
       await sqlClient`CREATE INDEX IF NOT EXISTS idx_saved_vans_route_id ON saved_vans(route_id)`;
 
+      const duration = Date.now() - startTime;
       isInitialized = true;
-      console.log('[DB] Tables created/verified successfully');
+      console.log('[DB] Tables created/verified successfully in', duration, 'ms');
     } catch (error) {
       console.error('[DB] Error ensuring tables exist:', error);
+      console.error('[DB] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack',
+        name: error instanceof Error ? error.name : 'Unknown',
+      });
       initializationPromise = null;
       throw error;
     }

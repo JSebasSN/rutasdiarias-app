@@ -1,12 +1,11 @@
 import { RouteTemplate, RouteRecord, SavedDriver, SavedTractor, SavedTrailer, SavedVan } from '@/types/routes';
 import { DEFAULT_ROUTES } from '@/constants/defaultRoutes';
-import { sql, ensureTablesExist } from './neon-client';
+import { sql } from './neon-client';
 
 class NeonStore {
   async getRoutes(): Promise<RouteTemplate[]> {
     try {
       console.log('[Store] Getting routes...');
-      await ensureTablesExist();
       const rows = await sql`SELECT * FROM route_templates ORDER BY created_at DESC` as any[];
       console.log('[Store] Retrieved', rows.length, 'routes');
       
@@ -36,7 +35,6 @@ class NeonStore {
 
   async addRoute(route: RouteTemplate): Promise<RouteTemplate> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO route_templates (id, name, type)
         VALUES (${route.id}, ${route.name}, ${route.type})
@@ -50,7 +48,6 @@ class NeonStore {
 
   async deleteRoute(routeId: string): Promise<boolean> {
     try {
-      await ensureTablesExist();
       await sql`DELETE FROM route_templates WHERE id = ${routeId}`;
       return true;
     } catch (error) {
@@ -62,7 +59,6 @@ class NeonStore {
   async getRecords(): Promise<RouteRecord[]> {
     try {
       console.log('[Store] Getting records...');
-      await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM route_records 
         ORDER BY created_at DESC
@@ -92,7 +88,6 @@ class NeonStore {
 
   async addRecord(record: RouteRecord): Promise<RouteRecord> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO route_records (
           id, date, route_template_id, route_name, route_type, 
@@ -116,7 +111,6 @@ class NeonStore {
 
   async updateRecord(record: RouteRecord): Promise<RouteRecord | null> {
     try {
-      await ensureTablesExist();
       await sql`
         UPDATE route_records SET
           date = ${record.date},
@@ -140,7 +134,6 @@ class NeonStore {
 
   async deleteRecord(recordId: string): Promise<boolean> {
     try {
-      await ensureTablesExist();
       await sql`DELETE FROM route_records WHERE id = ${recordId}`;
       return true;
     } catch (error) {
@@ -152,7 +145,6 @@ class NeonStore {
   async getDrivers(): Promise<SavedDriver[]> {
     try {
       console.log('[Store] Getting drivers...');
-      await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_drivers 
         ORDER BY last_used DESC
@@ -177,7 +169,6 @@ class NeonStore {
 
   async saveDriver(driver: SavedDriver): Promise<SavedDriver> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO saved_drivers (id, name, dni, phone, route_id, usage_count, last_used)
         VALUES (
@@ -200,7 +191,6 @@ class NeonStore {
   async getTractors(): Promise<SavedTractor[]> {
     try {
       console.log('[Store] Getting tractors...');
-      await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_tractors 
         ORDER BY last_used DESC
@@ -223,7 +213,6 @@ class NeonStore {
 
   async saveTractor(tractor: SavedTractor): Promise<SavedTractor> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO saved_tractors (id, plate, route_id, usage_count, last_used)
         VALUES (
@@ -244,7 +233,6 @@ class NeonStore {
   async getTrailers(): Promise<SavedTrailer[]> {
     try {
       console.log('[Store] Getting trailers...');
-      await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_trailers 
         ORDER BY last_used DESC
@@ -267,7 +255,6 @@ class NeonStore {
 
   async saveTrailer(trailer: SavedTrailer): Promise<SavedTrailer> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO saved_trailers (id, plate, route_id, usage_count, last_used)
         VALUES (
@@ -288,7 +275,6 @@ class NeonStore {
   async getVans(): Promise<SavedVan[]> {
     try {
       console.log('[Store] Getting vans...');
-      await ensureTablesExist();
       const rows = await sql`
         SELECT * FROM saved_vans 
         ORDER BY last_used DESC
@@ -311,7 +297,6 @@ class NeonStore {
 
   async saveVan(van: SavedVan): Promise<SavedVan> {
     try {
-      await ensureTablesExist();
       await sql`
         INSERT INTO saved_vans (id, plate, route_id, usage_count, last_used)
         VALUES (
