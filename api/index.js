@@ -1,110 +1,117 @@
 const app = require('../backend/hono.js');
 
-exports.handler = async (req, context) => {
-  const startTime = Date.now();
+exports.handler = async (event, context) => {
   const requestId = Math.random().toString(36).substring(7);
   
   try {
     console.log('========================================');
-    console.log('[Netlify Function] Request ID:', requestId);
-    console.log('[Netlify Function] Method:', req.method);
-    console.log('[Netlify Function] URL:', req.url);
-    console.log('[Netlify Function] Time:', new Date().toISOString());
+    console.log('[Lambda]', requestId, '- New request');
+    console.log('[Lambda] Method:', event.httpMethod);
+    console.log('[Lambda] Path:', event.path);
+    console.log('[Lambda] ENV Check - NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL);
     
-    console.log('[Netlify Function] Environment:');
-    console.log('  - NETLIFY_DATABASE_URL:', !!process.env.NETLIFY_DATABASE_URL ? 'SET' : 'NOT SET');
-    console.log('  - DATABASE_URL:', !!process.env.DATABASE_URL ? 'SET' : 'NOT SET');
-    console.log('  - NODE_ENV:', process.env.NODE_ENV);
-
-    const url = new URL(req.url);
-    const originalPath = url.pathname;
+    let path = event.path;
     
-    let path = url.pathname.replace(/^\/\.netlify\/functions\/api/, '');
+    if (path.startsWith('/.netlify/functions/api')) {
+      path = path.replace('/.netlify/functions/api', '');
+    }
     
     if (path.startsWith('/api')) {
       path = path.substring(4);
     }
     
-    if (!path || path === '/') {
+    if (!path || path === '') {
       path = '/';
     }
     
-    url.pathname = path;
+    console.log('[Lambda] Normalized path:', path);
     
-    console.log('[Netlify Function] Path:', originalPath, '->', path);
-
-    let body = undefined;
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
-      try {
-        const text = await req.text();
-        if (text) {
-          console.log('[Netlify Function] Body length:', text.length);
-          body = text;
+    const queryString = event.queryStringParameters 
+      ? '?' + Object.entries(event.queryStringParameters)
+          .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+          .join('&')
+      : '';
+    
+    const url = `https://example.com${path}${queryString}`;
+    console.log('[Lambda] Full URL:', url);
+    
+    const headers = new Headers();
+    if (event.headers) {
+      Object.entries(event.headers).forEach(([key, value]) => {
+        if (value) {
+          headers.set(key, value);
         }
-      } catch (error) {
-        console.error('[Netlify Function] Error reading body:', error);
-      }
+      });
     }
     
-    console.log('[Netlify Function] Calling Hono...');
-    const honoStartTime = Date.now();
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
-    const newReq = new Request(url.toString(), {
-      method: req.method,
-      headers: req.headers,
-      body: body,
+    if (event.httpMethod === 'OPTIONS') {
+      console.log('[Lambda] OPTIONS request - returning 204');
+      return {
+        statusCode: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+        body: '',
+      };
+    }
+    
+    const request = new Request(url, {
+      method: event.httpMethod,
+      headers: headers,
+      body: event.body || undefined,
     });
     
-    const response = await Promise.race([
-      app.default.fetch(newReq, {}, context),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout after 20 seconds')), 20000)
-      )
-    ]);
+    console.log('[Lambda] Calling Hono app...');
+    const response = await app.default.fetch(request);
     
-    const honoDuration = Date.now() - honoStartTime;
-    const totalDuration = Date.now() - startTime;
+    console.log('[Lambda] Hono response status:', response.status);
     
-    console.log('[Netlify Function] Response Status:', response.status);
-    console.log('[Netlify Function] Hono Duration:', honoDuration, 'ms');
-    console.log('[Netlify Function] Total Duration:', totalDuration, 'ms');
+    const responseBody = await response.text();
+    
+    const responseHeaders = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+    
+    responseHeaders['Access-Control-Allow-Origin'] = '*';
+    responseHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+    responseHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    
+    console.log('[Lambda]', requestId, '- Success:', response.status);
     console.log('========================================');
     
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
+    return {
+      statusCode: response.status,
       headers: responseHeaders,
-    });
+      body: responseBody,
+    };
   } catch (error) {
-    const duration = Date.now() - startTime;
     console.error('========================================');
-    console.error('[Netlify Function] ERROR - Request ID:', requestId);
-    console.error('[Netlify Function] Duration:', duration, 'ms');
-    console.error('[Netlify Function] Error Name:', error?.name);
-    console.error('[Netlify Function] Error Message:', error?.message);
-    console.error('[Netlify Function] Error Stack:', error?.stack);
+    console.error('[Lambda]', requestId, '- ERROR');
+    console.error('[Lambda] Error:', error);
+    console.error('[Lambda] Error message:', error?.message);
+    console.error('[Lambda] Error stack:', error?.stack);
     console.error('========================================');
     
-    return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal Server Error',
-      name: error?.name,
-      requestId,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString(),
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-    }, null, 2), {
-      status: 500,
-      headers: { 
+    return {
+      statusCode: 500,
+      headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
-    });
+      body: JSON.stringify({
+        error: error?.message || 'Internal Server Error',
+        requestId,
+        timestamp: new Date().toISOString(),
+      }),
+    };
   }
 };

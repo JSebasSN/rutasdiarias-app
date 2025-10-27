@@ -1,15 +1,11 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "api"
 
 [functions]
   directory = "api"
   node_bundler = "esbuild"
   external_node_modules = ["@neondatabase/serverless"]
-
-[functions."api"]
-  included_files = ["backend/**/*.js"]
 
 [[redirects]]
   from = "/api/*"
@@ -27,20 +23,11 @@
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-trpc-source"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
 
 [[headers]]
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-trpc-source"
-    Access-Control-Max-Age = "86400"
-
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-trpc-source"
-    Access-Control-Max-Age = "86400"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"

@@ -15,9 +15,114 @@ const DEFAULT_ROUTES = [
   { id: '12', name: 'IBIZA', type: 'FURGO' },
 ];
 
+let migrationDone = false;
+let migrationInProgress = false;
+
+async function ensureTables() {
+  if (migrationDone) {
+    return;
+  }
+
+  if (migrationInProgress) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return ensureTables();
+  }
+
+  migrationInProgress = true;
+
+  try {
+    console.log('[Store] Creating tables...');
+    
+    await sql`
+      CREATE TABLE IF NOT EXISTS route_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN ('TRAILER', 'FURGO')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS route_records (
+        id TEXT PRIMARY KEY,
+        date TEXT NOT NULL,
+        route_template_id TEXT NOT NULL,
+        route_name TEXT NOT NULL,
+        route_type TEXT NOT NULL CHECK (route_type IN ('TRAILER', 'FURGO')),
+        drivers JSONB NOT NULL,
+        tractor_plate TEXT,
+        trailer_plate TEXT,
+        vehicle_plate TEXT,
+        seal TEXT NOT NULL,
+        departure_time TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS saved_drivers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        dni TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        route_id TEXT NOT NULL,
+        usage_count INTEGER DEFAULT 1,
+        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(dni, route_id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS saved_tractors (
+        id TEXT PRIMARY KEY,
+        plate TEXT NOT NULL,
+        route_id TEXT NOT NULL,
+        usage_count INTEGER DEFAULT 1,
+        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(plate, route_id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS saved_trailers (
+        id TEXT PRIMARY KEY,
+        plate TEXT NOT NULL,
+        route_id TEXT NOT NULL,
+        usage_count INTEGER DEFAULT 1,
+        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(plate, route_id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS saved_vans (
+        id TEXT PRIMARY KEY,
+        plate TEXT NOT NULL,
+        route_id TEXT NOT NULL,
+        usage_count INTEGER DEFAULT 1,
+        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(plate, route_id)
+      )
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_route_records_date ON route_records(date)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_route_records_template_id ON route_records(route_template_id)`;
+    
+    migrationDone = true;
+    console.log('[Store] Tables created successfully');
+  } catch (error) {
+    console.error('[Store] Error creating tables:', error?.message);
+    throw error;
+  } finally {
+    migrationInProgress = false;
+  }
+}
+
 class NeonStore {
   async getRoutes() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting routes...');
       const rows = await sql`SELECT * FROM route_templates ORDER BY created_at DESC`;
       console.log('[Store] Retrieved', rows.length, 'routes');
@@ -25,11 +130,15 @@ class NeonStore {
       if (rows.length === 0) {
         console.log('[Store] No routes found, inserting defaults');
         for (const route of DEFAULT_ROUTES) {
-          await sql`
-            INSERT INTO route_templates (id, name, type)
-            VALUES (${route.id}, ${route.name}, ${route.type})
-            ON CONFLICT (id) DO NOTHING
-          `;
+          try {
+            await sql`
+              INSERT INTO route_templates (id, name, type)
+              VALUES (${route.id}, ${route.name}, ${route.type})
+              ON CONFLICT (id) DO NOTHING
+            `;
+          } catch (err) {
+            console.error('[Store] Error inserting route:', route.id, err?.message);
+          }
         }
         return DEFAULT_ROUTES;
       }
@@ -40,37 +149,42 @@ class NeonStore {
         type: row.type,
       }));
     } catch (error) {
-      console.error('[Store] Error getting routes:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting routes:', error?.message);
       throw error;
     }
   }
 
   async addRoute(route) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO route_templates (id, name, type)
         VALUES (${route.id}, ${route.name}, ${route.type})
       `;
       return route;
     } catch (error) {
-      console.error('Error adding route:', error);
+      console.error('[Store] Error adding route:', error?.message);
       throw error;
     }
   }
 
   async deleteRoute(routeId) {
     try {
+      await ensureTables();
+      
       await sql`DELETE FROM route_templates WHERE id = ${routeId}`;
       return true;
     } catch (error) {
-      console.error('Error deleting route:', error);
+      console.error('[Store] Error deleting route:', error?.message);
       throw error;
     }
   }
 
   async getRecords() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting records...');
       const rows = await sql`
         SELECT * FROM route_records 
@@ -93,14 +207,15 @@ class NeonStore {
         departureTime: row.departure_time,
       }));
     } catch (error) {
-      console.error('[Store] Error getting records:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting records:', error?.message);
       throw error;
     }
   }
 
   async addRecord(record) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO route_records (
           id, date, route_template_id, route_name, route_type, 
@@ -117,13 +232,15 @@ class NeonStore {
       `;
       return record;
     } catch (error) {
-      console.error('Error adding record:', error);
+      console.error('[Store] Error adding record:', error?.message);
       throw error;
     }
   }
 
   async updateRecord(record) {
     try {
+      await ensureTables();
+      
       await sql`
         UPDATE route_records SET
           date = ${record.date},
@@ -140,23 +257,27 @@ class NeonStore {
       `;
       return record;
     } catch (error) {
-      console.error('Error updating record:', error);
+      console.error('[Store] Error updating record:', error?.message);
       throw error;
     }
   }
 
   async deleteRecord(recordId) {
     try {
+      await ensureTables();
+      
       await sql`DELETE FROM route_records WHERE id = ${recordId}`;
       return true;
     } catch (error) {
-      console.error('Error deleting record:', error);
+      console.error('[Store] Error deleting record:', error?.message);
       throw error;
     }
   }
 
   async getDrivers() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting drivers...');
       const rows = await sql`
         SELECT * FROM saved_drivers 
@@ -174,14 +295,15 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('[Store] Error getting drivers:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting drivers:', error?.message);
       throw error;
     }
   }
 
   async saveDriver(driver) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO saved_drivers (id, name, dni, phone, route_id, usage_count, last_used)
         VALUES (
@@ -196,13 +318,15 @@ class NeonStore {
       `;
       return driver;
     } catch (error) {
-      console.error('Error saving driver:', error);
+      console.error('[Store] Error saving driver:', error?.message);
       throw error;
     }
   }
 
   async getTractors() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting tractors...');
       const rows = await sql`
         SELECT * FROM saved_tractors 
@@ -218,14 +342,15 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('[Store] Error getting tractors:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting tractors:', error?.message);
       throw error;
     }
   }
 
   async saveTractor(tractor) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO saved_tractors (id, plate, route_id, usage_count, last_used)
         VALUES (
@@ -238,13 +363,15 @@ class NeonStore {
       `;
       return tractor;
     } catch (error) {
-      console.error('Error saving tractor:', error);
+      console.error('[Store] Error saving tractor:', error?.message);
       throw error;
     }
   }
 
   async getTrailers() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting trailers...');
       const rows = await sql`
         SELECT * FROM saved_trailers 
@@ -260,14 +387,15 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('[Store] Error getting trailers:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting trailers:', error?.message);
       throw error;
     }
   }
 
   async saveTrailer(trailer) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO saved_trailers (id, plate, route_id, usage_count, last_used)
         VALUES (
@@ -280,13 +408,15 @@ class NeonStore {
       `;
       return trailer;
     } catch (error) {
-      console.error('Error saving trailer:', error);
+      console.error('[Store] Error saving trailer:', error?.message);
       throw error;
     }
   }
 
   async getVans() {
     try {
+      await ensureTables();
+      
       console.log('[Store] Getting vans...');
       const rows = await sql`
         SELECT * FROM saved_vans 
@@ -302,14 +432,15 @@ class NeonStore {
         lastUsed: row.last_used,
       }));
     } catch (error) {
-      console.error('[Store] Error getting vans:', error);
-      console.error('[Store] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[Store] Error getting vans:', error?.message);
       throw error;
     }
   }
 
   async saveVan(van) {
     try {
+      await ensureTables();
+      
       await sql`
         INSERT INTO saved_vans (id, plate, route_id, usage_count, last_used)
         VALUES (
@@ -322,7 +453,7 @@ class NeonStore {
       `;
       return van;
     } catch (error) {
-      console.error('Error saving van:', error);
+      console.error('[Store] Error saving van:', error?.message);
       throw error;
     }
   }
